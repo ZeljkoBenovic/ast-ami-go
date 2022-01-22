@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/ivahaev/amigo"
 )
@@ -25,7 +25,7 @@ func (call *Calls) RegisterHandlers(amigo *amigo.Amigo) {
 
 	for i, v := range errors {
 		if v != nil {
-			fmt.Println("Could not register handler: ", i, "Error: ",v.Error() )
+			log.Fatalln("Could not register handler: ", i, "Error: ",v.Error() )
 		}
 	}
 
