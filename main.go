@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 
+	"github.com/ZeljkoBenovic/ast-ami-go/config"
 	"github.com/ZeljkoBenovic/ast-ami-go/handlers"
 	"github.com/ivahaev/amigo"
 )
@@ -10,8 +11,10 @@ import (
 
 func main() {
 
+	// get configuration parameters
+	config := config.GetConfig()
 	// init AMI connection
-	settings := &amigo.Settings{Username: "phpari", Password: "phpari", Host: "172.16.223.250"}
+	settings := &amigo.Settings{Username: config.Username, Password: config.Password, Host: config.Host, Port: config.Port}
 	a := amigo.New(settings)
 	
 	// connect to AMI server
