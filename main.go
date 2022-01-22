@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"log"
 
 	"github.com/ZeljkoBenovic/ast-ami-go/config"
 	"github.com/ZeljkoBenovic/ast-ami-go/handlers"
@@ -19,17 +19,12 @@ func main() {
 	
 	// connect to AMI server
 	a.Connect()
-	
-	// Listen for connection events
-	a.On("connect", func(message string) {
-		fmt.Println("Connected", message)
-	})
 	a.On("error", func(message string) {
-		fmt.Println("Connection error:", message)
+		log.Fatalln("Connection error:", message)
 	})
 	
 	// set handlers
-	callHandlers := handlers.Calls{InboundContext: config.InboundContext, OutboundContext: config.OutboundContext}
+	callHandlers := handlers.Calls{InboundContext: config.InboundContext, OutboundContext: config.OutboundContext, LogFileLocation: config.LogFileLocation}
 	callHandlers.RegisterHandlers(a)
 	
 	// do not exit main 

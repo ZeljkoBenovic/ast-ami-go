@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
+	"os"
 )
 
 // Helper function remove channel from Calls
@@ -18,22 +18,25 @@ func (call *Calls) removeInboundChannel(i int) {
 	call.Inbound = call.Inbound[:len(call.Inbound)-1]
 }
 
-func logger (event interface{}) {
+func (call *Calls) logger (event interface{}) {
+	var logFile *os.File
+	var err error
+	// initialze log file location
+	if call.LogFileLocation == "" {
+		logFile, err = os.OpenFile("call_event_logs.log", os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
+		if err != nil {
+			log.Fatalln(err.Error())
+		}
+	} else {
+		logFile, err = os.OpenFile(call.LogFileLocation, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
+		if err != nil {
+			log.Fatalln(err.Error())
+		}
+	}
+	// set log file location
+	log.SetOutput(logFile)
+
+	// log content to file
 	jsonOutput, _ := json.Marshal(event)
 	log.Println(string(jsonOutput))
-}
-
-//TODO: Add logging to file
-
-//lint:ignore U1000 Ignore unused function as we use it for debugging
-func printJson (call interface{}) {
-	jsonOutput, err := json.MarshalIndent(call, "", "   ")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	fmt.Println(string(jsonOutput))
-}
-
-func debugPrint(msg map[string]string) {
-	fmt.Println(msg)
 }

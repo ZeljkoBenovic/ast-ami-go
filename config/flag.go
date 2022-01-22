@@ -18,6 +18,7 @@ type config struct {
 	Port string `yaml:"port"`
 	InboundContext string `yaml:"inbound_context"`
 	OutboundContext string `yaml:"outbound_context"`
+	LogFileLocation string `yaml:"log_file_location"`
 }
 
 func GetConfig() config {
@@ -43,6 +44,8 @@ func processFlags(args []string) (config, error) {
 
 	inboundContext := flag.String("inboundContext", "from-trunk", "Context for all inbound calls")
 	outboundContext := flag.String("outboundContext", "from-internal", "Context for all outbound calls")
+
+	logFileLocation := flag.String("logFileLocation","call_event.log","Location of log file for call events")
 	flag.Parse()
 
 	if len(args) == 0 {
@@ -58,6 +61,7 @@ func processFlags(args []string) (config, error) {
 			Port: *port,
 			InboundContext: *inboundContext,
 			OutboundContext: *outboundContext,
+			LogFileLocation: *logFileLocation,
 			}, nil
 	} else {
 		extension := filepath.Ext(*configFile)

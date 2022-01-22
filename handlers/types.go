@@ -40,4 +40,5 @@ type Calls struct {
 	Inbound []InboundCall `json:"inbound"`
 	InboundContext string
 	OutboundContext string
+	LogFileLocation string
 }
