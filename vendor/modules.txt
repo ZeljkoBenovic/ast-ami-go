@@ -1,0 +1,4 @@
+# github.com/ivahaev/amigo v0.1.10
+## explicit
+github.com/ivahaev/amigo
+github.com/ivahaev/amigo/uuid
