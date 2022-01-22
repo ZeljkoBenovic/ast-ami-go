@@ -17,6 +17,14 @@ func (call *Calls) removeInboundChannel(i int) {
 	call.Inbound = call.Inbound[:len(call.Inbound)-1]
 }
 
+func (call *Calls) SetInboundContext(context string) {
+	call.contexts.inbound = context
+}
+
+func (call *Calls) SetOutboundContext(context string) {
+	call.contexts.outbound = context
+}
+
 // Helper function to output json
 func printJson (call interface{}) {
 	jsonOutput, err := json.MarshalIndent(call, "", "   ")

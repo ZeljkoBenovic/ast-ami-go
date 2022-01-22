@@ -30,6 +30,8 @@ func main() {
 	
 	// set handlers
 	callHandlers := handlers.Calls{}
+	callHandlers.SetInboundContext("from-trunk")
+	callHandlers.SetOutboundContext("from-internal")
 	callHandlers.RegisterHandlers(a)
 	
 	// do not exit main 
