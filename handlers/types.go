@@ -23,6 +23,7 @@ type InboundCall struct {
 	Exten string `json:"did"`
 	UID string `json:"uid"`
 	Queue Queue `json:"queue,omitempty"`
+	Event string `json:"event"`
 }
 
 type OutboundCall struct {
@@ -31,6 +32,7 @@ type OutboundCall struct {
 	Context string `json:"context"`
 	Exten string `json:"called_num"`
 	UID string `json:"uid"`
+	Event string `json:"event"`
 }
 
 type Calls struct {

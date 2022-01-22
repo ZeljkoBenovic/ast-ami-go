@@ -1,9 +1,5 @@
 package handlers
 
-import (
-	"fmt"
-)
-
 //lint:ignore U1000 Ignore unused function as we use it for debugging
 func (call *Calls) defaultHandler(m map[string]string) {
 	// fmt.Printf("Event received: %v\n", m)	
@@ -26,18 +22,20 @@ func (call *Calls) hangupEventHandler(m map[string]string) {
 	// Outbound calls
 	for i, v := range call.Outbound {
 		if v.UID == m["Uniqueid"] {
-			fmt.Printf("HANGUP %s \n",m["Cause-txt"])
+			call.Outbound[i].Event = "OUTBOUND_CALL_END"
+			logger(call.Outbound[i])
+
 			call.removeOutboundChannel(i)
-			printJson(call)
 		}
 	}
 
 	// Inbound Calls
 	for i, v := range call.Inbound {
 		if v.UID == m["Uniqueid"] {
-			fmt.Printf("HANGUP %s \n",m["Cause-txt"])
+			call.Inbound[i].Event = "INBOUND_CALL_END"
+			logger(call.Inbound[i])
+
 			call.removeInboundChannel(i)
-			printJson(call)
 		}
 	}
 
@@ -46,14 +44,14 @@ func (call *Calls) hangupEventHandler(m map[string]string) {
 func (call *Calls) queueJoinEventHandler(m map[string]string) {
 	for i, v := range call.Inbound {
 		if  v.UID == m["Uniqueid"] {
-			fmt.Printf("Q JOIN")
 			call.Inbound[i].Queue.CallerIDName = m["CallerIDName"]
 			call.Inbound[i].Queue.CallerIDNum = m["CallerIDNum"]
 			call.Inbound[i].Queue.Count = m["Count"]
 			call.Inbound[i].Queue.Position = m["Position"]
 			call.Inbound[i].Queue.Queue = m["Queue"]
+			call.Inbound[i].Event = "QUEUE_JOIN"
 
-			printJson(call)
+			logger(call.Inbound[i])
 		}
 	}
 }
@@ -61,12 +59,12 @@ func (call *Calls) queueJoinEventHandler(m map[string]string) {
 func (call *Calls) agentConnectEventHandler(m map[string]string) {
 	for i, v := range call.Inbound {
 		if  v.UID == m["Uniqueid"] {
-			fmt.Printf("Q AGENT CONNECT")
 			call.Inbound[i].Queue.HoldTime = m["HoldTime"]
 			call.Inbound[i].Queue.RingTime = m["RingTime"]
 			call.Inbound[i].Queue.AgentName = m["MemberName"]
+			call.Inbound[i].Event = "AGENT_CONNECT"
 
-			printJson(call)
+			logger(call.Inbound[i])
 		}
 	}
 }
@@ -74,13 +72,13 @@ func (call *Calls) agentConnectEventHandler(m map[string]string) {
 func (call *Calls) agentCompleteEventHandler(m map[string]string) {
 	for i, v := range call.Inbound {
 		if  v.UID == m["Uniqueid"] {
-			fmt.Printf("Q AGENT COMPLETE")
 			call.Inbound[i].Queue.HoldTime = m["HoldTime"]
 			call.Inbound[i].Queue.AgentName = m["MemberName"]
 			call.Inbound[i].Queue.Reason = m["Reason"]
 			call.Inbound[i].Queue.TalkTime = m["TalkTime"]
+			call.Inbound[i].Event = "AGENT_COMPLETE"
 
-			printJson(call)
+			logger(call.Inbound[i])
 		}
 	}
 }
@@ -88,13 +86,13 @@ func (call *Calls) agentCompleteEventHandler(m map[string]string) {
 func (call *Calls) queueCallerAbandonEventHandler(m map[string]string) {
 	for i, v := range call.Inbound {
 		if  v.UID == m["Uniqueid"] {
-			fmt.Printf("Q CALL ABANDONED")
 			call.Inbound[i].Queue.HoldTime = m["HoldTime"]
 			call.Inbound[i].Queue.OriginalPosition = m["OriginalPosition"]
 			call.Inbound[i].Queue.Position = m["Position"]
 			call.Inbound[i].Queue.Queue = m["Queue"]
+			call.Inbound[i].Event = "QUEUE_ABANDON"
 
-			printJson(call)
+			logger(call.Inbound[i])
 		}
 	}
 }
@@ -104,35 +102,29 @@ func (call *Calls) queueCallerAbandonEventHandler(m map[string]string) {
 func (call *Calls) newStateEventHandler(m map[string]string) {
 
 	// Outbound calls
-	for _,v := range call.Outbound {
+	for i,v := range call.Outbound {
 		if  v.UID == m["Uniqueid"] {
-			// fmt.Println(m)
 			switch m["ChannelState"] {
 			case "4": // RINGING
-				fmt.Println("RINGING")
-				printJson(call)
-				// fmt.Printf("Client %s is RINGING. Called by %s",v.Exten,v.CallerIDNum)
+				call.Outbound[i].Event = "RINGING"
+				logger(call.Outbound[i])
 			case "6": // ANSWERED
-				fmt.Println("ANSWERED")
-				printJson(call)
-				// fmt.Printf("Client %s ANSWERED. Called by %s",v.Exten,v.CallerIDNum)
+			call.Outbound[i].Event = "ANSWERED"
+				logger(call.Outbound[i])
 			}
 		} 
 	}
 
 	// Inbound calls
-	for _,v := range call.Inbound {
+	for i,v := range call.Inbound {
 		if  v.UID == m["Uniqueid"] {
-			// fmt.Println(m)
 			switch m["ChannelState"] {
 			case "4": // RINGING
-				fmt.Println("RINGING")
-				printJson(call)
-				// fmt.Printf("Client %s is RINGING. Called by %s",v.Exten,v.CallerIDNum)
+			call.Inbound[i].Event = "RINGING"
+				logger(call.Inbound[i])
 			case "6": // ANSWERED
-				fmt.Println("ANSWERED")
-				printJson(call)
-				// fmt.Printf("Client %s ANSWERED. Called by %s",v.Exten,v.CallerIDNum)
+			call.Inbound[i].Event = "ANSWERED"
+				logger(call.Inbound[i])
 			}
 		} 
 	}
@@ -148,7 +140,9 @@ func (call *Calls) newChannelHandler(m map[string]string) {
 			Context: m["Context"],
 			Exten: m["Exten"],
 			UID: m["Uniqueid"],
+			Event: "NEW_CHANNEL",
 		}
+		logger(newChannel)
 		call.Outbound = append(call.Outbound, newChannel)
 	}
 
@@ -160,7 +154,9 @@ func (call *Calls) newChannelHandler(m map[string]string) {
 			Context: m["Context"],
 			Exten: m["Exten"],
 			UID: m["Uniqueid"],
+			Event: "NEW_CHANNEL",
 		}
+		logger(newChannel)
 		call.Inbound = append(call.Inbound, newChannel)
 	}
 }

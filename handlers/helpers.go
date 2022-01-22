@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 )
 
 // Helper function remove channel from Calls
@@ -17,7 +18,14 @@ func (call *Calls) removeInboundChannel(i int) {
 	call.Inbound = call.Inbound[:len(call.Inbound)-1]
 }
 
-// Helper function to output json
+func logger (event interface{}) {
+	jsonOutput, _ := json.Marshal(event)
+	log.Println(string(jsonOutput))
+}
+
+//TODO: Add logging to file
+
+//lint:ignore U1000 Ignore unused function as we use it for debugging
 func printJson (call interface{}) {
 	jsonOutput, err := json.MarshalIndent(call, "", "   ")
 	if err != nil {
