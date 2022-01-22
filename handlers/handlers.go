@@ -141,7 +141,7 @@ func (call *Calls) newStateEventHandler(m map[string]string) {
 func (call *Calls) newChannelHandler(m map[string]string) {
 	// fmt.Printf("New Channel Event: %v \n", m)
 	// Outbound call
-	if (m["Context"] == call.contexts.outbound && m["Exten"] != "") {
+	if (m["Context"] == call.OutboundContext && m["Exten"] != "") {
 		newChannel := OutboundCall{
 			CallerIDNum: m["CallerIDNum"],
 			CallerIDName: m["CallerIDName"],
@@ -153,7 +153,7 @@ func (call *Calls) newChannelHandler(m map[string]string) {
 	}
 
 	// Inbound call
-	if (m["Context"] == call.contexts.inbound && m["Exten"] != "") {
+	if (m["Context"] == call.InboundContext && m["Exten"] != "") {
 		newChannel := InboundCall{
 			CallerIDNum: m["CallerIDNum"],
 			CallerIDName: m["CallerIDName"],

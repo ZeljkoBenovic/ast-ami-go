@@ -33,13 +33,9 @@ type OutboundCall struct {
 	UID string `json:"uid"`
 }
 
-type context struct {
-	inbound string
-	outbound string 
-}
-
 type Calls struct {
 	Outbound []OutboundCall `json:"outbound"`
 	Inbound []InboundCall `json:"inbound"`
-	contexts context
+	InboundContext string
+	OutboundContext string
 }

@@ -16,6 +16,8 @@ type config struct {
 	Password string `yaml:"password"`
 	Host string `yaml:"host"`
 	Port string `yaml:"port"`
+	InboundContext string `yaml:"inbound_context"`
+	OutboundContext string `yaml:"outbound_context"`
 }
 
 func GetConfig() config {
@@ -38,6 +40,9 @@ func processFlags(args []string) (config, error) {
 	host := flag.String("host", "127.0.0.1", "AMI server ip address")
 	port := flag.String("port", "5038", "AMI server port number")
 	configFile := flag.String("configFile","","Configuration file in YAML format")
+
+	inboundContext := flag.String("inboundContext", "from-trunk", "Context for all inbound calls")
+	outboundContext := flag.String("outboundContext", "from-internal", "Context for all outbound calls")
 	flag.Parse()
 
 	if len(args) == 0 {
@@ -51,6 +56,8 @@ func processFlags(args []string) (config, error) {
 			Password: *password, 
 			Host: *host,
 			Port: *port,
+			InboundContext: *inboundContext,
+			OutboundContext: *outboundContext,
 			}, nil
 	} else {
 		extension := filepath.Ext(*configFile)
