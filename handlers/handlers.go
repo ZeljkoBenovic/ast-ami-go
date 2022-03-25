@@ -99,8 +99,6 @@ func (call *Calls) queueCallerAbandonEventHandler(m map[string]string) {
 	}
 }
 
-//TODO: QueueCallAbandoned Event
-
 func (call *Calls) newStateEventHandler(m map[string]string) {
 
 	// Outbound calls
