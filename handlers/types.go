@@ -41,4 +41,6 @@ type Calls struct {
 	InboundContext string
 	OutboundContext string
 	LogFileLocation string
+	WebhookURL string
+	WebhookMethod string
 }

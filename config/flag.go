@@ -19,6 +19,8 @@ type config struct {
 	InboundContext string `yaml:"inbound_context"`
 	OutboundContext string `yaml:"outbound_context"`
 	LogFileLocation string `yaml:"log_file_location"`
+	WebhookURL string `yaml:"webhook_url"`
+	WebhookMethod string `yaml:"webhook_method"`
 }
 
 func GetConfig() config {
@@ -40,12 +42,15 @@ func processFlags(args []string) (config, error) {
 	password := flag.String("password", "amp111", "Password for authentication to the AMI interface")
 	host := flag.String("host", "127.0.0.1", "AMI server ip address")
 	port := flag.String("port", "5038", "AMI server port number")
-	configFile := flag.String("configFile","","Configuration file in YAML format")
+	configFile := flag.String("config","","Configuration file in YAML format")
 
-	inboundContext := flag.String("inboundContext", "from-trunk", "Context for all inbound calls")
-	outboundContext := flag.String("outboundContext", "from-internal", "Context for all outbound calls")
+	inboundContext := flag.String("inbound-context", "from-trunk", "Context for all inbound calls")
+	outboundContext := flag.String("outbound-context", "from-internal", "Context for all outbound calls")
 
-	logFileLocation := flag.String("logFileLocation","call_event.log","Location of log file for call events")
+	logFileLocation := flag.String("log-file","/tmp/call_event.log","Location of log file for call events")
+
+	webhookUrl := flag.String("webhook-url", "","The webhook URL endpoint to send the events to")
+	webhookMethod := flag.String("webhook-method","POST","The REST method used to send the event to webhook")
 	flag.Parse()
 
 	if len(args) == 0 {
@@ -62,6 +67,8 @@ func processFlags(args []string) (config, error) {
 			InboundContext: *inboundContext,
 			OutboundContext: *outboundContext,
 			LogFileLocation: *logFileLocation,
+			WebhookURL: *webhookUrl,
+			WebhookMethod: *webhookMethod,
 			}, nil
 	} else {
 		extension := filepath.Ext(*configFile)
@@ -80,8 +87,7 @@ func processFlags(args []string) (config, error) {
 		}
 		
 		yamlConfig := config{}
-		err = yaml.Unmarshal(confBytes, &yamlConfig)
-		if err != nil {
+		if err := yaml.Unmarshal(confBytes, &yamlConfig); err != nil {
 			return config{}, errors.New("could not unmarshal config file")
 		}
 		

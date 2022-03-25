@@ -24,7 +24,13 @@ func main() {
 	})
 	
 	// set handlers
-	callHandlers := handlers.Calls{InboundContext: config.InboundContext, OutboundContext: config.OutboundContext, LogFileLocation: config.LogFileLocation}
+	callHandlers := handlers.Calls{
+		InboundContext: config.InboundContext, 
+		OutboundContext: config.OutboundContext, 
+		LogFileLocation: config.LogFileLocation,
+		WebhookURL: config.WebhookURL,
+		WebhookMethod: config.WebhookMethod,
+	}
 	callHandlers.RegisterHandlers(a)
 	
 	// do not exit main 
