@@ -30,6 +30,7 @@ func main() {
 		LogFileLocation: config.LogFileLocation,
 		WebhookURL: config.WebhookURL,
 		WebhookMethod: config.WebhookMethod,
+		Debug: config.Debug,
 	}
 	callHandlers.RegisterHandlers(a)
 	

@@ -43,4 +43,5 @@ type Calls struct {
 	LogFileLocation string
 	WebhookURL string
 	WebhookMethod string
+	Debug bool
 }

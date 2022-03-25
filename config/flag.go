@@ -21,6 +21,7 @@ type config struct {
 	LogFileLocation string `yaml:"log_file_location"`
 	WebhookURL string `yaml:"webhook_url"`
 	WebhookMethod string `yaml:"webhook_method"`
+	Debug bool `yaml:"debug"`
 }
 
 func GetConfig() config {
@@ -51,6 +52,8 @@ func processFlags(args []string) (config, error) {
 
 	webhookUrl := flag.String("webhook-url", "","The webhook URL endpoint to send the events to")
 	webhookMethod := flag.String("webhook-method","POST","The REST method used to send the event to webhook")
+
+	debug := flag.Bool("debug", false, "Turn on the debug mode and output everything to console")
 	flag.Parse()
 
 	if len(args) == 0 {
@@ -69,6 +72,7 @@ func processFlags(args []string) (config, error) {
 			LogFileLocation: *logFileLocation,
 			WebhookURL: *webhookUrl,
 			WebhookMethod: *webhookMethod,
+			Debug: *debug,
 			}, nil
 	} else {
 		extension := filepath.Ext(*configFile)

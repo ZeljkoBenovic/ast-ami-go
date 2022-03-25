@@ -17,6 +17,11 @@ func (call *Calls) logger (event interface{}) {
 	)
 
 	jsonOutput, _ := json.Marshal(event)
+
+	if call.Debug {
+		fmt.Println("EVENT: "+string(jsonOutput))
+	}
+
 	// initialze log file location
 	logFile, err = os.OpenFile(call.LogFileLocation, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0666)
 	if err != nil {
@@ -52,5 +57,9 @@ func (call *Calls) logger (event interface{}) {
 		// read the responce
 		respBody, _ := ioutil.ReadAll(resp.Body)
 		log.Println("RESPONCE: "+string(respBody))
+
+		if call.Debug {
+			fmt.Println("RESPONCE: "+string(respBody))
+		}
 	}
 }
