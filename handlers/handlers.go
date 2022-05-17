@@ -163,7 +163,8 @@ func (call *Calls) newChannelHandler(m map[string]string) {
 func (call *Calls) newExtenEventHandler(m map[string]string) {
 	// Inbound calls
 	for i, v := range call.Inbound {
-		if v.UID == m["Uniqueid"] && m["AppData"] == "__DIRECTION=INBOUND" {
+		//fmt.Println(m)
+		if v.UID == m["Uniqueid"] && m["AppData"] == "ext-did,s,1" {
 			call.Inbound[i].Exten = m["Exten"]
 		}
 
