@@ -4,7 +4,7 @@ import "fmt"
 
 //lint:ignore U1000 Ignore unused function as we use it for debugging
 func (call *Calls) defaultHandler(m map[string]string) {
-	// fmt.Printf("Event received: %v\n", m)	
+	//fmt.Printf("Event received: %v\n", m)
 	for _, v := range call.Outbound {
 		if m["Uniqueid"] == v.UID {
 			fmt.Println(m)
@@ -17,10 +17,9 @@ func (call *Calls) defaultHandler(m map[string]string) {
 	}
 }
 
-
 func (call *Calls) hangupEventHandler(m map[string]string) {
 	// fmt.Printf("Hangup Event received: %v\n", m)
-	
+
 	// Outbound calls
 	for i, v := range call.Outbound {
 		if v.UID == m["Uniqueid"] {
@@ -45,7 +44,7 @@ func (call *Calls) hangupEventHandler(m map[string]string) {
 
 func (call *Calls) queueJoinEventHandler(m map[string]string) {
 	for i, v := range call.Inbound {
-		if  v.UID == m["Uniqueid"] {
+		if v.UID == m["Uniqueid"] {
 			call.Inbound[i].Queue.CallerIDName = m["CallerIDName"]
 			call.Inbound[i].Queue.CallerIDNum = m["CallerIDNum"]
 			call.Inbound[i].Queue.Count = m["Count"]
@@ -60,7 +59,7 @@ func (call *Calls) queueJoinEventHandler(m map[string]string) {
 
 func (call *Calls) agentConnectEventHandler(m map[string]string) {
 	for i, v := range call.Inbound {
-		if  v.UID == m["Uniqueid"] {
+		if v.UID == m["Uniqueid"] {
 			call.Inbound[i].Queue.HoldTime = m["HoldTime"]
 			call.Inbound[i].Queue.RingTime = m["RingTime"]
 			call.Inbound[i].Queue.AgentName = m["MemberName"]
@@ -73,7 +72,7 @@ func (call *Calls) agentConnectEventHandler(m map[string]string) {
 
 func (call *Calls) agentCompleteEventHandler(m map[string]string) {
 	for i, v := range call.Inbound {
-		if  v.UID == m["Uniqueid"] {
+		if v.UID == m["Uniqueid"] {
 			call.Inbound[i].Queue.HoldTime = m["HoldTime"]
 			call.Inbound[i].Queue.AgentName = m["MemberName"]
 			call.Inbound[i].Queue.Reason = m["Reason"]
@@ -87,7 +86,7 @@ func (call *Calls) agentCompleteEventHandler(m map[string]string) {
 
 func (call *Calls) queueCallerAbandonEventHandler(m map[string]string) {
 	for i, v := range call.Inbound {
-		if  v.UID == m["Uniqueid"] {
+		if v.UID == m["Uniqueid"] {
 			call.Inbound[i].Queue.HoldTime = m["HoldTime"]
 			call.Inbound[i].Queue.OriginalPosition = m["OriginalPosition"]
 			call.Inbound[i].Queue.Position = m["Position"]
@@ -102,63 +101,74 @@ func (call *Calls) queueCallerAbandonEventHandler(m map[string]string) {
 func (call *Calls) newStateEventHandler(m map[string]string) {
 
 	// Outbound calls
-	for i,v := range call.Outbound {
-		if  v.UID == m["Uniqueid"] {
+	for i, v := range call.Outbound {
+		if v.UID == m["Uniqueid"] {
 			switch m["ChannelState"] {
 			case "4": // RINGING
 				call.Outbound[i].Event = "RINGING"
 				call.logger(call.Outbound[i])
 			case "6": // ANSWERED
-			call.Outbound[i].Event = "ANSWERED"
+				call.Outbound[i].Event = "ANSWERED"
 				call.logger(call.Outbound[i])
 			}
-		} 
+		}
 	}
 
 	// Inbound calls
-	for i,v := range call.Inbound {
-		if  v.UID == m["Uniqueid"] {
+	for i, v := range call.Inbound {
+		if v.UID == m["Uniqueid"] {
 			switch m["ChannelState"] {
 			case "4": // RINGING
-			call.Inbound[i].Event = "RINGING"
+				call.Inbound[i].Event = "RINGING"
 				call.logger(call.Inbound[i])
 			case "6": // ANSWERED
-			call.Inbound[i].Event = "ANSWERED"
+				call.Inbound[i].Event = "ANSWERED"
 				call.logger(call.Inbound[i])
 			}
-		} 
+		}
 	}
 }
 
 func (call *Calls) newChannelHandler(m map[string]string) {
-	// fmt.Printf("New Channel Event: %v \n", m)
+	//fmt.Printf("New Channel Event: %v \n", m)
 	// Outbound call
-	if (m["Context"] == call.OutboundContext && m["Exten"] != "" && m["Exten"] != "s") {
+	if m["Context"] == call.OutboundContext && m["Exten"] != "" && m["Exten"] != "s" {
 		newChannel := OutboundCall{
-			CallerIDNum: m["CallerIDNum"],
+			CallerIDNum:  m["CallerIDNum"],
 			CallerIDName: m["CallerIDName"],
-			Context: m["Context"],
-			Exten: m["Exten"],
-			UID: m["Uniqueid"],
-			Event: "NEW_OUTBOUND_CALL",
+			Context:      m["Context"],
+			Exten:        m["Exten"],
+			UID:          m["Uniqueid"],
+			Event:        "NEW_OUTBOUND_CALL",
 		}
 		call.logger(newChannel)
 		call.Outbound = append(call.Outbound, newChannel)
 	}
 
 	// Inbound call
-	if (m["Context"] == call.InboundContext && m["Exten"] != "" && m["Exten"] != "s") {
+	if m["Context"] == call.InboundContext && m["Exten"] != "" && m["Exten"] != "s" {
 		newChannel := InboundCall{
-			CallerIDNum: m["CallerIDNum"],
+			CallerIDNum:  m["CallerIDNum"],
 			CallerIDName: m["CallerIDName"],
-			Context: m["Context"],
-			Exten: m["Exten"],
-			UID: m["Uniqueid"],
-			Event: "NEW_INBOUND_CALL",
+			Context:      m["Context"],
+			Exten:        m["Exten"],
+			UID:          m["Uniqueid"],
+			Event:        "NEW_INBOUND_CALL",
 		}
 		call.logger(newChannel)
 		call.Inbound = append(call.Inbound, newChannel)
 	}
 }
 
+func (call *Calls) newExtenEventHandler(m map[string]string) {
+	// Inbound calls
+	for i, v := range call.Inbound {
+		if v.UID == m["Uniqueid"] && m["AppData"] == "__DIRECTION=INBOUND" {
+			call.Inbound[i].Exten = m["Exten"]
+		}
 
+		if v.UID == m["Uniqueid"] && m["Context"] == "macro-user-callerid" {
+			call.Inbound[i].CallerIDName = m["CallerIDName"]
+		}
+	}
+}
