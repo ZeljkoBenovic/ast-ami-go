@@ -1,6 +1,8 @@
 package amihandlers
 
-import "os"
+import (
+	"os"
+)
 
 func (a *Adapter) newChannelHandler() {
 	if err := a.amigo.RegisterHandler("Newchannel", func(m map[string]string) {
@@ -14,8 +16,9 @@ func (a *Adapter) newChannelHandler() {
 				UID:          m["Uniqueid"],
 				Event:        "NEW_OUTBOUND_CALL",
 				EventCode:    NewOutboundCall,
+				Timestamp:    convertTimeToUnixTime(m["TimeReceived"]),
 			}
-			// TODO: add timestamps
+
 			a.logger.Debug("Call registered", "direction", "outbound", "event", "NEW_OUTBOUND_CALL", "data", m)
 			a.logger.Debug("Events map", "event", "NEW_OUTBOUND_CALL", "map", a.amiEvents)
 			a.logger.Info("Call registered",
@@ -36,6 +39,7 @@ func (a *Adapter) newChannelHandler() {
 				UID:          m["Uniqueid"],
 				Event:        "NEW_INBOUND_CALL",
 				EventCode:    NewInboundCall,
+				Timestamp:    convertTimeToUnixTime(m["TimeReceived"]),
 			}
 
 			a.logger.Debug("Call registered", "event", "NEW_INBOUND_CALL", "direction", "inbound", "data", m)
@@ -58,6 +62,7 @@ func (a *Adapter) hangupHandler() {
 			// change call status
 			elem.Event = "OUTBOUND_CALL_END"
 			elem.EventCode = EndOutboundCall
+			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
 			a.amiEvents.Outbound[CallUID(m["Uniqueid"])] = elem
 			// send data
 			a.sendDataToWebhook(m["Uniqueid"], outbound)
@@ -81,6 +86,7 @@ func (a *Adapter) hangupHandler() {
 			// change call status
 			elem.Event = "INBOUND_CALL_END"
 			elem.EventCode = EndInboundCall
+			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
 			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 			// send data
 			a.sendDataToWebhook(m["Uniqueid"], inbound)
@@ -108,11 +114,13 @@ func (a *Adapter) hangupHandler() {
 //nolint:dupl
 func (a *Adapter) newStateHandler() {
 	if err := a.amigo.RegisterHandler("Newstate", func(m map[string]string) {
+		// TODO: add more newstate events
 		if elem, ok := a.amiEvents.Outbound[CallUID(m["Uniqueid"])]; ok {
 			switch m["ChannelState"] {
 			case "4":
 				elem.Event = "RINGING"
 				elem.EventCode = Ringing
+				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
 				a.amiEvents.Outbound[CallUID(m["Uniqueid"])] = elem
 
 				a.logger.Debug("Call state changed", "event", "RINGING",
@@ -130,6 +138,7 @@ func (a *Adapter) newStateHandler() {
 			case "6":
 				elem.Event = "ANSWERED"
 				elem.EventCode = Answered
+				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
 				elem.CallerIDName = m["CallerIDName"]
 				a.amiEvents.Outbound[CallUID(m["Uniqueid"])] = elem
 
@@ -152,6 +161,7 @@ func (a *Adapter) newStateHandler() {
 			case "4":
 				elem.Event = "RINGING"
 				elem.EventCode = Ringing
+				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
 				a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 
 				a.logger.Debug("Call state changed", "event", "RINGING",
@@ -169,6 +179,7 @@ func (a *Adapter) newStateHandler() {
 			case "6":
 				elem.Event = "ANSWERED"
 				elem.EventCode = Answered
+				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
 				elem.CallerIDName = m["CallerIDName"]
 				a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 
@@ -201,6 +212,7 @@ func (a *Adapter) queueJoinEvent() {
 			elem.Queue.Count = m["Count"]
 			elem.Queue.Position = m["Position"]
 			elem.Queue.Queue = m["Queue"]
+			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
 			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 
 			a.logger.Debug("Call state changed", "event", "QUEUE_JOIN",
@@ -229,6 +241,7 @@ func (a *Adapter) agentConnectEvent() {
 			elem.Queue.AgentName = m["MemberName"]
 			elem.Event = "AGENT_CONNECT"
 			elem.EventCode = AgentConnect
+			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
 			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 
 			a.logger.Debug("Call state changed", "event", "AGENT_CONNECT",
@@ -258,6 +271,7 @@ func (a *Adapter) agentComplete() {
 			elem.Queue.TalkTime = m["TalkTime"]
 			elem.Event = "AGENT_COMPLETE"
 			elem.EventCode = AgentComplete
+			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
 			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 
 			a.logger.Debug("Call state changed", "event", "AGENT_COMPLETE",
@@ -286,6 +300,7 @@ func (a *Adapter) queueAbandon() {
 			elem.Queue.Queue = m["Queue"]
 			elem.Event = "QUEUE_ABANDON"
 			elem.EventCode = QueueAbandon
+			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
 			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 
 			a.logger.Debug("Call state changed", "event", "QUEUE_ABANDON",

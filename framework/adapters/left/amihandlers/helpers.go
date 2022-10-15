@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 )
 
 type direction string
@@ -58,4 +59,13 @@ func (a *Adapter) sendDataToWebhook(uid string, way direction) {
 				"err", err.Error())
 		}
 	}
+}
+
+func convertTimeToUnixTime(timeString string) int64 {
+	timest, err := time.Parse("2006-01-02T15:04:05.999999-07:00", timeString)
+	if err != nil {
+		return 0
+	}
+
+	return timest.Unix()
 }

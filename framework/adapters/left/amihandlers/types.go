@@ -24,6 +24,7 @@ type InboundCall struct {
 	Queue        Queue     `json:"queue,omitempty"`
 	Event        string    `json:"event"`
 	EventCode    EventCode `json:"event_code"`
+	Timestamp    int64     `json:"timestamp"`
 }
 
 type OutboundCall struct {
@@ -34,6 +35,7 @@ type OutboundCall struct {
 	UID          string    `json:"uid"`
 	Event        string    `json:"event"`
 	EventCode    EventCode `json:"event_code"`
+	Timestamp    int64     `json:"timestamp"`
 }
 
 type CallUID string
