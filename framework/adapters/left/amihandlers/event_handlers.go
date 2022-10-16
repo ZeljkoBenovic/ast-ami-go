@@ -114,7 +114,6 @@ func (a *Adapter) hangupHandler() {
 //nolint:dupl
 func (a *Adapter) newStateHandler() {
 	if err := a.amigo.RegisterHandler("Newstate", func(m map[string]string) {
-		// TODO: add more newstate events
 		if elem, ok := a.amiEvents.Outbound[CallUID(m["Uniqueid"])]; ok {
 			switch m["ChannelState"] {
 			case "4":

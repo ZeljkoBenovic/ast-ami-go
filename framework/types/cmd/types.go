@@ -7,7 +7,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -31,9 +30,8 @@ type Config struct {
 	AMIDebug          bool   `yaml:"ami_debug"`
 	AMIDebugFile      string `yaml:"ami_debug_file"`
 
-	ExportDefaultConfig  bool     `yaml:"-"`
-	ConfigFileLocation   string   `yaml:"-"`
-	AdditionalHeadersMap []string `yaml:"-"`
+	ExportDefaultConfig bool   `yaml:"-"`
+	ConfigFileLocation  string `yaml:"-"`
 }
 
 func NewConfig() *Config {
@@ -55,7 +53,7 @@ func (c *Config) ProcessConfig() error {
 	flag.StringVar(&c.WebhookURL, "webhook-url", "", "The webhook URL endpoint to send the events to")
 	flag.StringVar(&c.WebhookMethod, "webhook-method", "POST", "The REST method used to send the event to webhook")
 	flag.StringVar(&c.AdditionalHeaders, "additional-headers", "",
-		"Additional headers that will be sent to webhook, separated by comma (,)")
+		"Additional headers that will be sent to webhook in format <header_name>:<header_value>, separated by comma (,)")
 
 	flag.BoolVar(&c.AMIDebug, "ami-debug", false, "Set this flag to catch all AMI events")
 	flag.StringVar(&c.AMIDebugFile, "ami-debug-file", "", "File to write all AMI events to")
@@ -68,8 +66,6 @@ func (c *Config) ProcessConfig() error {
 	if err := c.setConfigFromConfigFile(); err != nil {
 		return fmt.Errorf("could not load config from file: %w", err)
 	}
-
-	c.AdditionalHeadersMap = strings.Split(c.AdditionalHeaders, ",")
 
 	return nil
 }
