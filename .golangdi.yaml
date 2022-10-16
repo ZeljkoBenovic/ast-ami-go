@@ -1,5 +1,4 @@
 # This file configures github.com/golangci/golangci-lint.
-
 run:
   timeout: 3m
   tests: true
@@ -42,17 +41,3 @@ linters-settings:
   goconst:
     min-len: 3
     min-occurrences: 3
-
-issues:
-  new-from-rev: origin/v2 # report only new issues with reference to develop branch
-  exclude-rules:
-    - path: _test\.go
-      linters:
-        - gosec
-        - unparam
-        - lll
-  include:
-    - EXC0012 # Exported (.+) should have comment( \(or a comment on this block\))? or be unexported
-    - EXC0013 # Package comment should be of the form "(.+)...
-    - EXC0014 # Comment on exported (.+) should be of the form "(.+)..."
-    - EXC0015 # Should have a package comment
