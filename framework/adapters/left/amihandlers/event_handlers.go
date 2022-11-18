@@ -9,6 +9,7 @@ func (a *Adapter) newChannelHandler() {
 		// Outbound call
 		if m["Context"] == a.config.OutboundContext && m["Exten"] != "" && m["Exten"] != "s" {
 			a.amiEvents.Outbound[CallUID(m["Uniqueid"])] = OutboundCall{
+				Type:         "OUTBOUND",
 				CallerIDNum:  m["CallerIDNum"],
 				CallerIDName: m["CallerIDName"],
 				Context:      m["Context"],
@@ -32,6 +33,7 @@ func (a *Adapter) newChannelHandler() {
 		// Inbound call
 		if m["Context"] == a.config.InboundContext && m["Exten"] != "" && m["Exten"] != "s" {
 			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = InboundCall{
+				Type:         "INBOUND",
 				CallerIDNum:  m["CallerIDNum"],
 				CallerIDName: m["CallerIDName"],
 				Context:      m["Context"],

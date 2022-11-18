@@ -16,8 +16,12 @@ type Queue struct {
 }
 
 type InboundCall struct {
+	Type         string    `json:"type"`
 	CallerIDNum  string    `json:"caller_id_num"`
 	CallerIDName string    `json:"caller_id_name"`
+	Extension    string    `json:"extension"`
+	ExtName      string    `json:"extension_name"`
+	CalledNum    string    `json:"called_num"`
 	Context      string    `json:"-"`
 	Exten        string    `json:"did"`
 	UID          string    `json:"uid"`
@@ -28,10 +32,14 @@ type InboundCall struct {
 }
 
 type OutboundCall struct {
+	Type         string    `json:"type"`
 	CallerIDNum  string    `json:"extension"`
 	CallerIDName string    `json:"extension_name"`
 	Context      string    `json:"-"`
 	Exten        string    `json:"called_num"`
+	CallIDNum    string    `json:"caller_id_num"`
+	CallIDName   string    `json:"caller_id_name"`
+	Queue        Queue     `json:"queue"`
 	UID          string    `json:"uid"`
 	Event        string    `json:"event"`
 	EventCode    EventCode `json:"event_code"`
