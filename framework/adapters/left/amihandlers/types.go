@@ -1,18 +1,18 @@
 package amihandlers
 
 type Queue struct {
-	CallerIDNum      string `json:"caller_num,omitempty"`
-	CallerIDName     string `json:"caller_name,omitempty"`
-	Count            string `json:"queue_total_channels,omitempty"`
-	Position         string `json:"queue_position,omitempty"`
-	Queue            string `json:"queue,omitempty"`
-	HoldTime         string `json:"hold_time,omitempty"`
-	RingTime         string `json:"ring_time,omitempty"`
-	TalkTime         string `json:"talk_time,omitempty"`
-	AgentName        string `json:"agent_name,omitempty"`
-	AgentNumber      string `json:"agent_number,omitempty"`
-	Reason           string `json:"end_reason,omitempty"`
-	OriginalPosition string `json:"original_position,omitempty"`
+	CallerIDNum      string `json:"caller_num"`
+	CallerIDName     string `json:"caller_name"`
+	Count            string `json:"queue_total_channels"`
+	Position         string `json:"queue_position"`
+	Queue            string `json:"queue"`
+	HoldTime         string `json:"hold_time"`
+	RingTime         string `json:"ring_time"`
+	TalkTime         string `json:"talk_time"`
+	AgentName        string `json:"agent_name"`
+	AgentNumber      string `json:"agent_number"`
+	Reason           string `json:"end_reason"`
+	OriginalPosition string `json:"original_position"`
 }
 
 type InboundCall struct {
@@ -21,7 +21,7 @@ type InboundCall struct {
 	Context      string    `json:"-"`
 	Exten        string    `json:"did"`
 	UID          string    `json:"uid"`
-	Queue        Queue     `json:"queue,omitempty"`
+	Queue        Queue     `json:"queue"`
 	Event        string    `json:"event"`
 	EventCode    EventCode `json:"event_code"`
 	Timestamp    int64     `json:"timestamp"`
