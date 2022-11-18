@@ -39,6 +39,7 @@ type OutboundCall struct {
 	Exten        string    `json:"called_num"`
 	CallIDNum    string    `json:"caller_id_num"`
 	CallIDName   string    `json:"caller_id_name"`
+	DID          string    `json:"did"`
 	Queue        Queue     `json:"queue"`
 	UID          string    `json:"uid"`
 	Event        string    `json:"event"`
