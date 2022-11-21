@@ -1,6 +1,7 @@
 config.yaml
 *.log
 .idea
+ast-ami-go
 
 artifacts
 dist/

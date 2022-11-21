@@ -239,7 +239,7 @@ func (a *Adapter) agentConnectEvent() {
 		if elem, ok := a.amiEvents.Inbound[CallUID(m["Uniqueid"])]; ok {
 			elem.Queue.HoldTime = m["HoldTime"]
 			elem.Queue.RingTime = m["RingTime"]
-			elem.Queue.AgentName = m["MemberName"]
+			elem.Queue.AgentName = parseAgentName(m["MemberName"], a.logger)
 			elem.Event = "AGENT_CONNECT"
 			elem.EventCode = AgentConnect
 			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
@@ -267,7 +267,7 @@ func (a *Adapter) agentComplete() {
 	if err := a.amigo.RegisterHandler("AgentComplete", func(m map[string]string) {
 		if elem, ok := a.amiEvents.Inbound[CallUID(m["Uniqueid"])]; ok {
 			elem.Queue.HoldTime = m["HoldTime"]
-			elem.Queue.AgentName = m["MemberName"]
+			elem.Queue.AgentName = parseAgentName(m["MemberName"], a.logger)
 			elem.Queue.Reason = m["Reason"]
 			elem.Queue.TalkTime = m["TalkTime"]
 			elem.Event = "AGENT_COMPLETE"

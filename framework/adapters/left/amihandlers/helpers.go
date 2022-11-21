@@ -4,7 +4,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"regexp"
+	"strings"
 	"time"
+
+	"github.com/hashicorp/go-hclog"
 )
 
 type direction string
@@ -68,4 +72,20 @@ func convertTimeToUnixTime(timeString string) int64 {
 	}
 
 	return timest.Unix()
+}
+
+func parseAgentName(rawMemberName string, logger hclog.Logger) string {
+	match, err := regexp.Match("@", []byte(rawMemberName))
+	if err != nil {
+		logger.Error("could not use regex on parseAgentName helper func", "err", err.Error())
+	}
+
+	if match {
+		temp1 := strings.Split(rawMemberName, "@")
+		temp2 := strings.Split(temp1[0], "/")
+
+		return temp2[1]
+	}
+
+	return rawMemberName
 }
