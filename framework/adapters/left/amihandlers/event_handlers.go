@@ -13,11 +13,12 @@ func (a *Adapter) newChannelHandler() {
 				CallerIDNum:  m["CallerIDNum"],
 				CallerIDName: m["CallerIDName"],
 				Context:      m["Context"],
-				Exten:        m["Exten"],
-				UID:          m["Uniqueid"],
-				Event:        "NEW_OUTBOUND_CALL",
-				EventCode:    NewOutboundCall,
-				Timestamp:    convertTimeToUnixTime(m["TimeReceived"]),
+				// format called_num with leading +381
+				Exten:     normalizeNumber(m["Exten"]),
+				UID:       m["Uniqueid"],
+				Event:     "NEW_OUTBOUND_CALL",
+				EventCode: NewOutboundCall,
+				Timestamp: convertTimeToUnixTime(m["TimeReceived"]),
 			}
 
 			a.logger.Debug("Call registered", "direction", "outbound", "event", "NEW_OUTBOUND_CALL", "data", m)
@@ -34,7 +35,7 @@ func (a *Adapter) newChannelHandler() {
 		if m["Context"] == a.config.InboundContext && m["Exten"] != "" && m["Exten"] != "s" {
 			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = InboundCall{
 				Type:         "INBOUND",
-				CallerIDNum:  m["CallerIDNum"],
+				CallerIDNum:  normalizeNumber(m["CallerIDNum"]),
 				CallerIDName: m["CallerIDName"],
 				Context:      m["Context"],
 				Exten:        m["Exten"],
@@ -209,7 +210,7 @@ func (a *Adapter) queueJoinEvent() {
 			elem.Event = "QUEUE_JOIN"
 			elem.EventCode = QueueJoin
 			elem.Queue.CallerIDName = m["CallerIDName"]
-			elem.Queue.CallerIDNum = m["CallerIDNum"]
+			elem.Queue.CallerIDNum = normalizeNumber(m["CallerIDNum"])
 			elem.Queue.Count = m["Count"]
 			elem.Queue.Position = m["Position"]
 			elem.Queue.Queue = m["Queue"]

@@ -89,3 +89,12 @@ func parseAgentName(rawMemberName string, logger hclog.Logger) string {
 
 	return rawMemberName
 }
+
+func normalizeNumber(number string) string {
+	// normalize number only if there is one leading zero
+	if string(number[0]) == "0" && string(number[1]) != "0" {
+		return "+381" + number[1:]
+	}
+
+	return number
+}
