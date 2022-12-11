@@ -2,6 +2,7 @@ package webhook
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -53,8 +54,16 @@ func (a *Adapter) SendToWebhook(dataToSend interface{}) error {
 	// print request headers in debug log
 	a.debugHTTPRequestHeaders(req)
 
-	// set new http client
-	client := &http.Client{}
+	// set new http client with secure or insecure TLS
+	client := &http.Client{
+		Transport: &http.Transport{
+			TLSClientConfig: &tls.Config{
+				//nolint
+				InsecureSkipVerify: a.config.TLSInsecure,
+			},
+		},
+	}
+
 	// send the request and wait for response
 	resp, respErr := client.Do(req)
 	if respErr != nil {

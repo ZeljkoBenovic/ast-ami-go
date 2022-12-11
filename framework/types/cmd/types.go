@@ -29,6 +29,7 @@ type Config struct {
 	LogLevel          string `yaml:"log-level"`
 	AMIDebug          bool   `yaml:"ami_debug"`
 	AMIDebugFile      string `yaml:"ami_debug_file"`
+	TLSInsecure       bool   `yaml:"tls_insecure"`
 
 	ExportDefaultConfig bool   `yaml:"-"`
 	ConfigFileLocation  string `yaml:"-"`
@@ -59,6 +60,7 @@ func (c *Config) ProcessConfig() error {
 	flag.StringVar(&c.AMIDebugFile, "ami-debug-file", "", "File to write all AMI events to")
 
 	flag.BoolVar(&c.ExportDefaultConfig, "export", false, "Set this flag to export the default config file")
+	flag.BoolVar(&c.TLSInsecure, "tls-insecure", false, "Use insecure TLS communication, do not check for valid cert")
 	flag.StringVar(&c.LogLevel, "log-level", "info", "Turn on the debug mode and output everything to console")
 
 	flag.Parse()
