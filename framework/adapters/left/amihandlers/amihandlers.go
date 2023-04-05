@@ -61,5 +61,6 @@ func (a *Adapter) RegisterEventHandlers() {
 	a.agentConnectEvent()
 	a.agentComplete()
 	a.queueAbandon()
+	a.recordingLocationFetcher()
 	a.hangupHandler()
 }

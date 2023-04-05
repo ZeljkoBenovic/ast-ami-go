@@ -2,6 +2,7 @@ package amihandlers
 
 import (
 	"os"
+	"strings"
 )
 
 func (a *Adapter) newChannelHandler() {
@@ -318,4 +319,61 @@ func (a *Adapter) queueAbandon() {
 		a.logger.Error("Could not register handler", "handler", "QUEUECALLERABANDON")
 		os.Exit(1)
 	}
+}
+
+func (a *Adapter) recordingLocationFetcher() {
+	if err := a.amigo.RegisterHandler("Newexten", func(m map[string]string) {
+		// we get the information about the recording location from AGI script invocation
+		agiScriptParameters := strings.Split(m["AppData"], ",")
+
+		// filter out Newexten events
+		if m["Context"] != "macro-hangupcall" ||
+			len(agiScriptParameters) != 3 ||
+			agiScriptParameters[0] != "attendedtransfer-rec-restart.php" {
+			return
+		}
+
+		if elem, ok := a.amiEvents.Inbound[CallUID(m["Uniqueid"])]; ok {
+			// the 3rd AGI parameter contains the recording location
+			elem.Recording = a.processRecordingLocation(agiScriptParameters[2])
+
+			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
+
+			a.logger.Debug("Inbound call recording information fetched from Uniqueid",
+				"orig_rec", agiScriptParameters[2],
+				"processed_rec", a.processRecordingLocation(agiScriptParameters[2]),
+				"event", m)
+		}
+
+		// the id of a call can show in Linekedid field on inbound Queue calls
+		if elem, ok := a.amiEvents.Inbound[CallUID(m["Linkedid"])]; ok {
+			// the 3rd AGI parameter contains the recording location
+			elem.Recording = a.processRecordingLocation(agiScriptParameters[2])
+
+			a.amiEvents.Inbound[CallUID(m["Linkedid"])] = elem
+
+			a.logger.Debug("Inbound call recording information fetched from Linkedid",
+				"orig_rec", agiScriptParameters[2],
+				"processed_rec", a.processRecordingLocation(agiScriptParameters[2]),
+				"event", m)
+		}
+
+		if elem, ok := a.amiEvents.Outbound[CallUID(m["Uniqueid"])]; ok {
+			// the 3rd AGI parameter contains the recording location
+			elem.Recording = a.processRecordingLocation(agiScriptParameters[2])
+
+			a.amiEvents.Outbound[CallUID(m["Uniqueid"])] = elem
+
+			a.logger.Debug("Outbound call recording information fetched",
+				"orig_rec", agiScriptParameters[2],
+				"processed_rec", a.processRecordingLocation(agiScriptParameters[2]),
+				"event", m)
+		}
+	}); err != nil {
+		a.logger.Error("Could not register Newexten handler", "err", err)
+	}
+}
+
+func (a *Adapter) processRecordingLocation(origRecLocation string) string {
+	return a.config.MonitorPublicFolder + strings.Split(origRecLocation, "/var/spool/asterisk/monitor")[1]
 }

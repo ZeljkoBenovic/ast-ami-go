@@ -16,19 +16,20 @@ var (
 )
 
 type Config struct {
-	Username          string `yaml:"username"`
-	Password          string `yaml:"password"`
-	Host              string `yaml:"host"`
-	Port              string `yaml:"port"`
-	InboundContext    string `yaml:"inbound_context"`
-	OutboundContext   string `yaml:"outbound_context"`
-	LogFileLocation   string `yaml:"log_file_location"`
-	WebhookURL        string `yaml:"webhook_url"`
-	WebhookMethod     string `yaml:"webhook_method"`
-	AdditionalHeaders string `yaml:"additional_headers"`
-	LogLevel          string `yaml:"log-level"`
-	AMIDebug          bool   `yaml:"ami_debug"`
-	AMIDebugFile      string `yaml:"ami_debug_file"`
+	Username            string `yaml:"username"`
+	Password            string `yaml:"password"`
+	Host                string `yaml:"host"`
+	Port                string `yaml:"port"`
+	InboundContext      string `yaml:"inbound_context"`
+	OutboundContext     string `yaml:"outbound_context"`
+	LogFileLocation     string `yaml:"log_file_location"`
+	WebhookURL          string `yaml:"webhook_url"`
+	WebhookMethod       string `yaml:"webhook_method"`
+	AdditionalHeaders   string `yaml:"additional_headers"`
+	LogLevel            string `yaml:"log-level"`
+	AMIDebug            bool   `yaml:"ami_debug"`
+	AMIDebugFile        string `yaml:"ami_debug_file"`
+	MonitorPublicFolder string `yaml:"monitor_public_folder"`
 
 	ExportDefaultConfig bool   `yaml:"-"`
 	ConfigFileLocation  string `yaml:"-"`
@@ -60,6 +61,9 @@ func (c *Config) ProcessConfig() error {
 
 	flag.BoolVar(&c.ExportDefaultConfig, "export", false, "Set this flag to export the default config file")
 	flag.StringVar(&c.LogLevel, "log-level", "info", "Turn on the debug mode and output everything to console")
+
+	flag.StringVar(&c.MonitorPublicFolder, "monitor-public", "",
+		"The http publicly available folder that the recordings can be downloaded from")
 
 	flag.Parse()
 
