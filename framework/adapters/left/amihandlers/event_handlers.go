@@ -208,31 +208,13 @@ func (a *Adapter) newStateHandler() {
 }
 
 func (a *Adapter) queueJoinEvent() {
-	if err := a.amigo.RegisterHandler("Join", func(m map[string]string) {
-		if elem, ok := a.amiEvents.Inbound[CallUID(m["Uniqueid"])]; ok {
-			elem.Event = "QUEUE_JOIN"
-			elem.EventCode = QueueJoin
-			elem.Queue.CallerIDName = m["CallerIDName"]
-			elem.Queue.CallerIDNum = m["CallerIDNum"]
-			elem.Queue.Count = m["Count"]
-			elem.Queue.Position = m["Position"]
-			elem.Queue.Queue = m["Queue"]
-			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
-			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
+	// keeping this for legacy systems
+	if err := a.amigo.RegisterHandler("Join", a.queueJoinHandler); err != nil {
+		a.logger.Error("Could not register handler", "handler", "JOIN")
+		os.Exit(1)
+	}
 
-			a.logger.Debug("Call state changed", "event", "QUEUE_JOIN",
-				"direction", "inbound", "event", m)
-			a.logger.Debug("Events map", "event", "QUEUE_JOIN",
-				"direction", "inbound", "map", a.amiEvents)
-			a.logger.Info("Call state changed", "event", "QUEUE_JOIN",
-				"direction", "inbound",
-				"caller_id", m["CallerIDNum"],
-				"queue_num", m["Queue"],
-				"call_id", m["Uniqueid"])
-
-			a.sendDataToWebhook(m["Uniqueid"], inbound)
-		}
-	}); err != nil {
+	if err := a.amigo.RegisterHandler("QueueCallerJoin", a.queueJoinHandler); err != nil {
 		a.logger.Error("Could not register handler", "handler", "JOIN")
 		os.Exit(1)
 	}
@@ -244,6 +226,7 @@ func (a *Adapter) agentConnectEvent() {
 			elem.Queue.HoldTime = m["HoldTime"]
 			elem.Queue.RingTime = m["RingTime"]
 			elem.Queue.AgentName = m["MemberName"]
+			elem.Queue.AgentNumber = strings.Split(strings.Split(m["DestChannel"], "@")[0], "/")[1]
 			elem.Event = "AGENT_CONNECT"
 			elem.EventCode = AgentConnect
 			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
@@ -361,4 +344,30 @@ func constructRecordingFilePath(recFileName string) string {
 	}
 
 	return fmt.Sprintf("/%d/%s/%s/%s", time.Now().Year(), month, day, recFileName)
+}
+
+func (a *Adapter) queueJoinHandler(m map[string]string) {
+	if elem, ok := a.amiEvents.Inbound[CallUID(m["Uniqueid"])]; ok {
+		elem.Event = "QUEUE_JOIN"
+		elem.EventCode = QueueJoin
+		elem.Queue.CallerIDName = m["CallerIDName"]
+		elem.Queue.CallerIDNum = m["CallerIDNum"]
+		elem.Queue.Count = m["Count"]
+		elem.Queue.Position = m["Position"]
+		elem.Queue.Queue = m["Queue"]
+		elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
+		a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
+
+		a.logger.Debug("Call state changed", "event", "QUEUE_JOIN",
+			"direction", "inbound", "event", m)
+		a.logger.Debug("Events map", "event", "QUEUE_JOIN",
+			"direction", "inbound", "map", a.amiEvents)
+		a.logger.Info("Call state changed", "event", "QUEUE_JOIN",
+			"direction", "inbound",
+			"caller_id", m["CallerIDNum"],
+			"queue_num", m["Queue"],
+			"call_id", m["Uniqueid"])
+
+		a.sendDataToWebhook(m["Uniqueid"], inbound)
+	}
 }
