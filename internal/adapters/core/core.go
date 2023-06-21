@@ -1,8 +1,6 @@
 package core
 
 import (
-	"os"
-
 	"github.com/ZeljkoBenovic/ast-ami-go/internal/ports"
 	"github.com/ZeljkoBenovic/ast-ami-go/internal/types"
 	"github.com/hashicorp/go-hclog"
@@ -49,8 +47,7 @@ func (a *Adapter) ConnectToAsterisk() {
 
 	a.ami.Connect()
 	a.ami.On("error", func(message string) {
-		a.logger.Error("Could not connect to Asterisk AMI", "err", message, "config", a.config)
-		os.Exit(1)
+		a.logger.Error("Asterisk AMI error", "err", message, "config", a.config)
 	})
 	a.ami.On("connect", func(message string) {
 		a.logger.Info("Connected to Asterisk AMI",
