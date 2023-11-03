@@ -1,7 +1,11 @@
 package amihandlers
 
 import (
+	"fmt"
 	"os"
+	"strconv"
+	"strings"
+	"time"
 )
 
 func (a *Adapter) newChannelHandler() {
@@ -142,6 +146,7 @@ func (a *Adapter) newStateHandler() {
 				elem.EventCode = Answered
 				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
 				elem.CallerIDName = m["CallerIDName"]
+				elem.Recording = a.fetchRecordingFullPath(m["Channel"])
 				a.amiEvents.Outbound[CallUID(m["Uniqueid"])] = elem
 
 				a.logger.Debug("Call state changed", "event", "ANSWERED",
@@ -183,6 +188,7 @@ func (a *Adapter) newStateHandler() {
 				elem.EventCode = Answered
 				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
 				elem.CallerIDName = m["CallerIDName"]
+				elem.Recording = a.fetchRecordingFullPath(m["Channel"])
 				a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 
 				a.logger.Debug("Call state changed", "event", "ANSWERED",
@@ -205,31 +211,13 @@ func (a *Adapter) newStateHandler() {
 }
 
 func (a *Adapter) queueJoinEvent() {
-	if err := a.amigo.RegisterHandler("Join", func(m map[string]string) {
-		if elem, ok := a.amiEvents.Inbound[CallUID(m["Uniqueid"])]; ok {
-			elem.Event = "QUEUE_JOIN"
-			elem.EventCode = QueueJoin
-			elem.Queue.CallerIDName = m["CallerIDName"]
-			elem.Queue.CallerIDNum = normalizeNumber(m["CallerIDNum"])
-			elem.Queue.Count = m["Count"]
-			elem.Queue.Position = m["Position"]
-			elem.Queue.Queue = m["Queue"]
-			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
-			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
+	// keeping this for legacy systems
+	if err := a.amigo.RegisterHandler("Join", a.queueJoinHandler); err != nil {
+		a.logger.Error("Could not register handler", "handler", "JOIN")
+		os.Exit(1)
+	}
 
-			a.logger.Debug("Call state changed", "event", "QUEUE_JOIN",
-				"direction", "inbound", "event", m)
-			a.logger.Debug("Events map", "event", "QUEUE_JOIN",
-				"direction", "inbound", "map", a.amiEvents)
-			a.logger.Info("Call state changed", "event", "QUEUE_JOIN",
-				"direction", "inbound",
-				"caller_id", m["CallerIDNum"],
-				"queue_num", m["Queue"],
-				"call_id", m["Uniqueid"])
-
-			a.sendDataToWebhook(m["Uniqueid"], inbound)
-		}
-	}); err != nil {
+	if err := a.amigo.RegisterHandler("QueueCallerJoin", a.queueJoinHandler); err != nil {
 		a.logger.Error("Could not register handler", "handler", "JOIN")
 		os.Exit(1)
 	}
@@ -241,9 +229,11 @@ func (a *Adapter) agentConnectEvent() {
 			elem.Queue.HoldTime = m["HoldTime"]
 			elem.Queue.RingTime = m["RingTime"]
 			elem.Queue.AgentName = parseAgentName(m["MemberName"], a.logger)
+			elem.Queue.AgentNumber = strings.Split(strings.Split(m["DestChannel"], "@")[0], "/")[1]
 			elem.Event = "AGENT_CONNECT"
 			elem.EventCode = AgentConnect
 			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
+			elem.Recording = a.fetchRecordingFullPath(m["Channel"])
 			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 
 			a.logger.Debug("Call state changed", "event", "AGENT_CONNECT",
@@ -320,5 +310,67 @@ func (a *Adapter) queueAbandon() {
 	}); err != nil {
 		a.logger.Error("Could not register handler", "handler", "QUEUECALLERABANDON")
 		os.Exit(1)
+	}
+}
+
+func (a *Adapter) fetchRecordingFullPath(channel string) string {
+	// get the name of the recording file
+	rec, err := a.amigo.Action(map[string]string{
+		"Action":   "Getvar",
+		"Channel":  channel,
+		"Variable": "CDR(recordingfile)",
+	})
+	if err != nil {
+		a.logger.Error("Could not run Getvar action", "err", err)
+	}
+
+	a.logger.Debug("Recording file name fetched via Action", "action", rec)
+
+	// if there is no recording file return empty string
+	if rec["Value"] == "" {
+		return ""
+	}
+
+	// prepend full public path of the monitor folder to full path of the recording
+	return strings.TrimSpace(a.config.MonitorPublicFolder) + constructRecordingFilePath(rec["Value"])
+}
+
+func constructRecordingFilePath(recFileName string) string {
+	month := strconv.FormatInt(int64(time.Now().Month()), 10)
+	if len(month) == 1 {
+		month = "0" + month
+	}
+
+	day := strconv.FormatInt(int64(time.Now().Day()), 10)
+	if len(day) == 1 {
+		day = "0" + day
+	}
+
+	return fmt.Sprintf("/%d/%s/%s/%s", time.Now().Year(), month, day, recFileName)
+}
+
+func (a *Adapter) queueJoinHandler(m map[string]string) {
+	if elem, ok := a.amiEvents.Inbound[CallUID(m["Uniqueid"])]; ok {
+		elem.Event = "QUEUE_JOIN"
+		elem.EventCode = QueueJoin
+		elem.Queue.CallerIDName = m["CallerIDName"]
+		elem.Queue.CallerIDNum = normalizeNumber(m["CallerIDNum"])
+		elem.Queue.Count = m["Count"]
+		elem.Queue.Position = m["Position"]
+		elem.Queue.Queue = m["Queue"]
+		elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
+		a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
+
+		a.logger.Debug("Call state changed", "event", "QUEUE_JOIN",
+			"direction", "inbound", "event", m)
+		a.logger.Debug("Events map", "event", "QUEUE_JOIN",
+			"direction", "inbound", "map", a.amiEvents)
+		a.logger.Info("Call state changed", "event", "QUEUE_JOIN",
+			"direction", "inbound",
+			"caller_id", m["CallerIDNum"],
+			"queue_num", m["Queue"],
+			"call_id", m["Uniqueid"])
+
+		a.sendDataToWebhook(m["Uniqueid"], inbound)
 	}
 }
