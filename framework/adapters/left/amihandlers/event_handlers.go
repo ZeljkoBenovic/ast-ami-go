@@ -2,6 +2,7 @@ package amihandlers
 
 import (
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"os"
 	"strconv"
 	"strings"
@@ -22,11 +23,11 @@ func (a *Adapter) newChannelHandler() {
 				UID:       m["Uniqueid"],
 				Event:     "NEW_OUTBOUND_CALL",
 				EventCode: NewOutboundCall,
-				Timestamp: convertTimeToUnixTime(m["TimeReceived"]),
+				Timestamp: convertTimeToUnixTime(m["TimeReceived"], a.logger),
 			}
 
-			a.logger.Debug("Call registered", "direction", "outbound", "event", "NEW_OUTBOUND_CALL", "data", m)
-			a.logger.Debug("Events map", "event", "NEW_OUTBOUND_CALL", "map", a.amiEvents)
+			a.logger.Debug("Call registered", "direction", "outbound", "event", "NEW_OUTBOUND_CALL", "data", spew.Sdump(m))
+			a.logger.Debug("Events map", "event", "NEW_OUTBOUND_CALL", "map", spew.Sdump(a.amiEvents))
 			a.logger.Info("Call registered",
 				"event", "NEW_OUTBOUND_CALL",
 				"direction", "outbound",
@@ -46,11 +47,11 @@ func (a *Adapter) newChannelHandler() {
 				UID:          m["Uniqueid"],
 				Event:        "NEW_INBOUND_CALL",
 				EventCode:    NewInboundCall,
-				Timestamp:    convertTimeToUnixTime(m["TimeReceived"]),
+				Timestamp:    convertTimeToUnixTime(m["TimeReceived"], a.logger),
 			}
 
-			a.logger.Debug("Call registered", "event", "NEW_INBOUND_CALL", "direction", "inbound", "data", m)
-			a.logger.Debug("Events map", "event", "NEW_INBOUND_CALL", "map", a.amiEvents)
+			a.logger.Debug("Call registered", "event", "NEW_INBOUND_CALL", "direction", "inbound", "data", spew.Sdump(m))
+			a.logger.Debug("Events map", "event", "NEW_INBOUND_CALL", "map", spew.Sdump(a.amiEvents))
 			a.logger.Info("Call registered", "event", "NEW_INBOUND_CALL", "direction", "inbound",
 				"caller_id", m["CallerIDNum"],
 				"call_id", m["Uniqueid"])
@@ -69,7 +70,7 @@ func (a *Adapter) hangupHandler() {
 			// change call status
 			elem.Event = "OUTBOUND_CALL_END"
 			elem.EventCode = EndOutboundCall
-			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
+			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"], a.logger)
 			a.amiEvents.Outbound[CallUID(m["Uniqueid"])] = elem
 			// send data
 			a.sendDataToWebhook(m["Uniqueid"], outbound)
@@ -81,19 +82,19 @@ func (a *Adapter) hangupHandler() {
 				"direction", "outbound",
 				"caller_id", m["CallerIDNum"],
 				"call_id", m["Uniqueid"])
-			a.logger.Debug("Hangup event registered", "event", "OUTBOUND_CALL_END", "direction", "outbound", "data", m)
+			a.logger.Debug("Hangup event registered", "event", "OUTBOUND_CALL_END", "direction", "outbound", "data", spew.Sdump(m))
 			a.logger.Debug("Call event deleted from map",
 				"event", "OUTBOUND_CALL_END",
 				"direction", "outbound",
 				"call_id", m["Uniqueid"],
-				"map", a.amiEvents)
+				"map", spew.Sdump(a.amiEvents))
 		}
 
 		if elem, ok := a.amiEvents.Inbound[CallUID(m["Uniqueid"])]; ok {
 			// change call status
 			elem.Event = "INBOUND_CALL_END"
 			elem.EventCode = EndInboundCall
-			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
+			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"], a.logger)
 			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 			// send data
 			a.sendDataToWebhook(m["Uniqueid"], inbound)
@@ -105,12 +106,12 @@ func (a *Adapter) hangupHandler() {
 				"direction", "inbound",
 				"caller_id", m["CallerIDNum"],
 				"call_id", m["Uniqueid"])
-			a.logger.Debug("Hangup event registered", "event", "INBOUND_CALL_END", "direction", "inbound", "event", m)
+			a.logger.Debug("Hangup event registered", "event", "INBOUND_CALL_END", "direction", "inbound", "event", spew.Sdump(m))
 			a.logger.Debug("Call event deleted from map",
 				"event", "INBOUND_CALL_END",
 				"direction", "inbound",
 				"call_id", m["Uniqueid"],
-				"map", a.amiEvents)
+				"map", spew.Sdump(a.amiEvents))
 		}
 	}); err != nil {
 		a.logger.Error("Could not register handler", "handler", "HANGUP")
@@ -126,13 +127,13 @@ func (a *Adapter) newStateHandler() {
 			case "4":
 				elem.Event = "RINGING"
 				elem.EventCode = Ringing
-				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
+				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"], a.logger)
 				a.amiEvents.Outbound[CallUID(m["Uniqueid"])] = elem
 
 				a.logger.Debug("Call state changed", "event", "RINGING",
-					"direction", "outbound", "event", m)
+					"direction", "outbound", "event", spew.Sdump(m))
 				a.logger.Debug("Events map", "event", "RINGING",
-					"direction", "outbound", "map", a.amiEvents)
+					"direction", "outbound", "map", spew.Sdump(a.amiEvents))
 				a.logger.Info("Call state changed", "event", "RINGING",
 					"direction", "outbound",
 					"caller_id", m["CallerIDNum"],
@@ -144,15 +145,15 @@ func (a *Adapter) newStateHandler() {
 			case "6":
 				elem.Event = "ANSWERED"
 				elem.EventCode = Answered
-				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
+				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"], a.logger)
 				elem.CallerIDName = m["CallerIDName"]
 				elem.Recording = a.fetchRecordingFullPath(m["Channel"])
 				a.amiEvents.Outbound[CallUID(m["Uniqueid"])] = elem
 
 				a.logger.Debug("Call state changed", "event", "ANSWERED",
-					"direction", "outbound", "event", m)
+					"direction", "outbound", "event", spew.Sdump(m))
 				a.logger.Debug("Events map", "event", "ANSWERED",
-					"direction", "outbound", "map", a.amiEvents)
+					"direction", "outbound", "map", spew.Sdump(a.amiEvents))
 				a.logger.Info("Call state changed", "event", "ANSWERED",
 					"direction", "outbound",
 					"caller_id", m["CallerIDNum"],
@@ -168,13 +169,13 @@ func (a *Adapter) newStateHandler() {
 			case "4":
 				elem.Event = "RINGING"
 				elem.EventCode = Ringing
-				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
+				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"], a.logger)
 				a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 
 				a.logger.Debug("Call state changed", "event", "RINGING",
-					"direction", "inbound", "event", m)
+					"direction", "inbound", "event", spew.Sdump(m))
 				a.logger.Debug("Events map", "event", "RINGING",
-					"direction", "inbound", "map", a.amiEvents)
+					"direction", "inbound", "map", spew.Sdump(a.amiEvents))
 				a.logger.Info("Call state changed", "event", "RINGING",
 					"direction", "inbound",
 					"caller_id", m["CallerIDNum"],
@@ -186,15 +187,15 @@ func (a *Adapter) newStateHandler() {
 			case "6":
 				elem.Event = "ANSWERED"
 				elem.EventCode = Answered
-				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
+				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"], a.logger)
 				elem.CallerIDName = m["CallerIDName"]
 				elem.Recording = a.fetchRecordingFullPath(m["Channel"])
 				a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 
 				a.logger.Debug("Call state changed", "event", "ANSWERED",
-					"direction", "inbound", "event", m)
+					"direction", "inbound", "event", spew.Sdump(m))
 				a.logger.Debug("Events map", "event", "ANSWERED",
-					"direction", "inbound", "map", a.amiEvents)
+					"direction", "inbound", "map", spew.Sdump(a.amiEvents))
 				a.logger.Info("Call state changed", "event", "ANSWERED",
 					"direction", "inbound",
 					"caller_id", m["CallerIDNum"],
@@ -232,14 +233,14 @@ func (a *Adapter) agentConnectEvent() {
 			elem.Queue.AgentNumber = strings.Split(strings.Split(m["DestChannel"], "@")[0], "/")[1]
 			elem.Event = "AGENT_CONNECT"
 			elem.EventCode = AgentConnect
-			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
+			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"], a.logger)
 			elem.Recording = a.fetchRecordingFullPath(m["Channel"])
 			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 
 			a.logger.Debug("Call state changed", "event", "AGENT_CONNECT",
-				"direction", "inbound", "event", m)
+				"direction", "inbound", "event", spew.Sdump(m))
 			a.logger.Debug("Events map", "event", "AGENT_CONNECT",
-				"direction", "inbound", "map", a.amiEvents)
+				"direction", "inbound", "map", spew.Sdump(a.amiEvents))
 			a.logger.Info("Call state changed", "event", "AGENT_CONNECT",
 				"direction", "inbound",
 				"caller_id", m["CallerIDNum"],
@@ -263,13 +264,13 @@ func (a *Adapter) agentComplete() {
 			elem.Queue.TalkTime = m["TalkTime"]
 			elem.Event = "AGENT_COMPLETE"
 			elem.EventCode = AgentComplete
-			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
+			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"], a.logger)
 			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 
 			a.logger.Debug("Call state changed", "event", "AGENT_COMPLETE",
-				"direction", "inbound", "event", m)
+				"direction", "inbound", "event", spew.Sdump(m))
 			a.logger.Debug("Events map", "event", "AGENT_COMPLETE",
-				"direction", "inbound", "map", a.amiEvents)
+				"direction", "inbound", "map", spew.Sdump(a.amiEvents))
 			a.logger.Info("Call state changed", "event", "AGENT_COMPLETE",
 				"direction", "inbound",
 				"caller_id", m["CallerIDNum"],
@@ -292,13 +293,13 @@ func (a *Adapter) queueAbandon() {
 			elem.Queue.Queue = m["Queue"]
 			elem.Event = "QUEUE_ABANDON"
 			elem.EventCode = QueueAbandon
-			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
+			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"], a.logger)
 			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 
 			a.logger.Debug("Call state changed", "event", "QUEUE_ABANDON",
-				"direction", "inbound", "event", m)
+				"direction", "inbound", "event", spew.Sdump(m))
 			a.logger.Debug("Events map", "event", "QUEUE_ABANDON",
-				"direction", "inbound", "map", a.amiEvents)
+				"direction", "inbound", "map", spew.Sdump(a.amiEvents))
 			a.logger.Info("Call state changed", "event", "QUEUE_ABANDON",
 				"direction", "inbound",
 				"caller_id", m["CallerIDNum"],
@@ -358,13 +359,13 @@ func (a *Adapter) queueJoinHandler(m map[string]string) {
 		elem.Queue.Count = m["Count"]
 		elem.Queue.Position = m["Position"]
 		elem.Queue.Queue = m["Queue"]
-		elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"])
+		elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"], a.logger)
 		a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 
 		a.logger.Debug("Call state changed", "event", "QUEUE_JOIN",
-			"direction", "inbound", "event", m)
+			"direction", "inbound", "event", spew.Sdump(m))
 		a.logger.Debug("Events map", "event", "QUEUE_JOIN",
-			"direction", "inbound", "map", a.amiEvents)
+			"direction", "inbound", "map", spew.Sdump(a.amiEvents))
 		a.logger.Info("Call state changed", "event", "QUEUE_JOIN",
 			"direction", "inbound",
 			"caller_id", m["CallerIDNum"],

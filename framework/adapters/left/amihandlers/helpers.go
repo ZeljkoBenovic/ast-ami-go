@@ -65,9 +65,10 @@ func (a *Adapter) sendDataToWebhook(uid string, way direction) {
 	}
 }
 
-func convertTimeToUnixTime(timeString string) int64 {
-	timest, err := time.Parse("2006-01-02T15:04:05.999999-07:00", timeString)
+func convertTimeToUnixTime(timeString string, logger hclog.Logger) int64 {
+	timest, err := time.Parse(time.RFC3339Nano, timeString)
 	if err != nil {
+		logger.Error("Could not parse timestamp", "err", err)
 		return 0
 	}
 
