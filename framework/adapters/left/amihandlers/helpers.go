@@ -3,6 +3,7 @@ package amihandlers
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/davecgh/go-spew/spew"
 	"os"
 	"regexp"
 	"strings"
@@ -39,7 +40,7 @@ func encodeMap(m map[string]string, toFile string) error {
 
 		_, _ = file.WriteString("\n")
 	} else {
-		fmt.Printf("%s\n", string(jsonStr))
+		spew.Dump(m)
 	}
 
 	return nil

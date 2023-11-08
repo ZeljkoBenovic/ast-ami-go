@@ -37,7 +37,7 @@ func (a *Adapter) newChannelHandler() {
 			a.sendDataToWebhook(m["Uniqueid"], outbound)
 		}
 		// Inbound call
-		if m["Context"] == a.config.InboundContext && m["Exten"] != "" && m["Exten"] != "s" {
+		if (m["Context"] == "from-pstn-toheader" && m["Exten"] == "s") || m["Context"] == a.config.InboundContext && m["Exten"] != "" && m["Exten"] != "s" {
 			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = InboundCall{
 				Type:         "INBOUND",
 				CallerIDNum:  normalizeNumber(m["CallerIDNum"]),
