@@ -9,6 +9,42 @@ import (
 	"time"
 )
 
+func (a *Adapter) newExtenHandler() {
+	if err := a.amigo.RegisterHandler("NewExten", func(m map[string]string) {
+		if a.config.ClickToCallContext == m["Context"] {
+			_, ok := a.amiEvents.Outbound[CallUID(m["Uniqueid"])]
+			if ok {
+				return
+			}
+
+			a.amiEvents.Outbound[CallUID(m["Uniqueid"])] = OutboundCall{
+				Type:         "OUTBOUND",
+				CallerIDNum:  m["CallerIDNum"],
+				CallerIDName: m["CallerIDName"],
+				UID:          m["Uniqueid"],
+				Context:      m["Context"],
+				Exten:        normalizeNumber(m["Exten"]),
+				Event:        "NEW_OUTBOUND_CALL",
+				EventCode:    NewOutboundCall,
+				Timestamp:    convertTimeToUnixTime(m["TimeReceived"], a.logger),
+			}
+
+			a.logger.Debug("Call registered", "direction", "outbound", "event", "NEW_OUTBOUND_CALL", "data", spew.Sdump(m))
+			a.logger.Debug("Events map", "event", "NEW_OUTBOUND_CALL", "map", spew.Sdump(a.amiEvents))
+			a.logger.Info("Call registered",
+				"event", "NEW_OUTBOUND_CALL",
+				"direction", "outbound",
+				"caller_id", m["CallerIDNum"],
+				"call_id", m["Uniqueid"])
+
+			a.sendDataToWebhook(m["Uniqueid"], outbound)
+		}
+	}); err != nil {
+		a.logger.Error("could not setup newExten handler", "error", err)
+		os.Exit(1)
+	}
+}
+
 func (a *Adapter) newChannelHandler() {
 	if err := a.amigo.RegisterHandler("Newchannel", func(m map[string]string) {
 		// Outbound call
@@ -37,7 +73,7 @@ func (a *Adapter) newChannelHandler() {
 			a.sendDataToWebhook(m["Uniqueid"], outbound)
 		}
 		// Inbound call
-		if (m["Context"] == "from-pstn-toheader" && m["Exten"] == "s") || m["Context"] == a.config.InboundContext && m["Exten"] != "" && m["Exten"] != "s" {
+		if (m["Context"] == "from-pstn-toheader" && m["Exten"] == "s") || (m["Context"] == a.config.InboundContext && m["Exten"] != "" && m["Exten"] != "s") {
 			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = InboundCall{
 				Type:         "INBOUND",
 				CallerIDNum:  normalizeNumber(m["CallerIDNum"]),
@@ -122,7 +158,14 @@ func (a *Adapter) hangupHandler() {
 //nolint:dupl
 func (a *Adapter) newStateHandler() {
 	if err := a.amigo.RegisterHandler("Newstate", func(m map[string]string) {
-		if elem, ok := a.amiEvents.Outbound[CallUID(m["Uniqueid"])]; ok {
+		var callIdentifier string
+		if _, ok := a.amiEvents.Outbound[CallUID(m["Uniqueid"])]; ok {
+			callIdentifier = m["Uniqueid"]
+		} else {
+			callIdentifier = m["Linkedid"]
+		}
+
+		if elem, ok := a.amiEvents.Outbound[CallUID(callIdentifier)]; ok {
 			switch m["ChannelState"] {
 			case "4":
 				elem.Event = "RINGING"

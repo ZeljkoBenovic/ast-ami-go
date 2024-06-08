@@ -55,6 +55,7 @@ func (a *Adapter) DebugHandler() {
 }
 
 func (a *Adapter) RegisterEventHandlers() {
+	a.newExtenHandler()
 	a.newChannelHandler()
 	a.newStateHandler()
 	a.queueJoinEvent()
