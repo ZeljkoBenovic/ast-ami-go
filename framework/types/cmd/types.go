@@ -22,6 +22,7 @@ type Config struct {
 	Port                string `yaml:"port"`
 	InboundContext      string `yaml:"inbound_context"`
 	OutboundContext     string `yaml:"outbound_context"`
+	ClickToCallContext  string `yaml:"click_to_call_context"`
 	LogFileLocation     string `yaml:"log_file_location"`
 	WebhookURL          string `yaml:"webhook_url"`
 	WebhookMethod       string `yaml:"webhook_method"`
@@ -51,6 +52,7 @@ func (c *Config) ProcessConfig() error {
 
 	flag.StringVar(&c.InboundContext, "inbound-context", "from-trunk", "Context for all inbound calls")
 	flag.StringVar(&c.OutboundContext, "outbound-context", "from-internal", "Context for all outbound calls")
+	flag.StringVar(&c.ClickToCallContext, "click-to-call-context", "from-c2c", "Context for outbound calls using click2call feature")
 
 	flag.StringVar(&c.WebhookURL, "webhook-url", "", "The webhook URL endpoint to send the events to")
 	flag.StringVar(&c.WebhookMethod, "webhook-method", "POST", "The REST method used to send the event to webhook")
