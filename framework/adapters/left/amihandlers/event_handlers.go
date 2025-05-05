@@ -27,6 +27,7 @@ func (a *Adapter) newExtenHandler() {
 				Event:        "NEW_OUTBOUND_CALL",
 				EventCode:    NewOutboundCall,
 				Timestamp:    convertTimeToUnixTime(m["TimeReceived"], a.logger),
+				ChannelID:    m["Channel"],
 			}
 
 			a.logger.Debug("Call registered", "direction", "outbound", "event", "NEW_OUTBOUND_CALL", "data", spew.Sdump(m))
@@ -60,6 +61,7 @@ func (a *Adapter) newChannelHandler() {
 				Event:     "NEW_OUTBOUND_CALL",
 				EventCode: NewOutboundCall,
 				Timestamp: convertTimeToUnixTime(m["TimeReceived"], a.logger),
+				ChannelID: m["Channel"],
 			}
 
 			a.logger.Debug("Call registered", "direction", "outbound", "event", "NEW_OUTBOUND_CALL", "data", spew.Sdump(m))
@@ -84,6 +86,7 @@ func (a *Adapter) newChannelHandler() {
 				Event:        "NEW_INBOUND_CALL",
 				EventCode:    NewInboundCall,
 				Timestamp:    convertTimeToUnixTime(m["TimeReceived"], a.logger),
+				ChannelID:    m["Channel"],
 			}
 
 			a.logger.Debug("Call registered", "event", "NEW_INBOUND_CALL", "direction", "inbound", "data", spew.Sdump(m))
@@ -171,7 +174,7 @@ func (a *Adapter) newStateHandler() {
 				elem.Event = "RINGING"
 				elem.EventCode = Ringing
 				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"], a.logger)
-				a.amiEvents.Outbound[CallUID(m["Uniqueid"])] = elem
+				a.amiEvents.Outbound[CallUID(callIdentifier)] = elem
 
 				a.logger.Debug("Call state changed", "event", "RINGING",
 					"direction", "outbound", "event", spew.Sdump(m))
@@ -191,9 +194,9 @@ func (a *Adapter) newStateHandler() {
 				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"], a.logger)
 				elem.CallerIDName = m["CallerIDName"]
 				if elem.Recording == "" {
-					elem.Recording = a.fetchRecordingFullPath(m["Channel"])
+					elem.Recording = a.fetchRecordingFullPath(a.amiEvents.Outbound[CallUID(callIdentifier)].ChannelID)
 				}
-				a.amiEvents.Outbound[CallUID(m["Uniqueid"])] = elem
+				a.amiEvents.Outbound[CallUID(callIdentifier)] = elem
 
 				a.logger.Debug("Call state changed", "event", "ANSWERED",
 					"direction", "outbound", "event", spew.Sdump(m))
@@ -281,7 +284,9 @@ func (a *Adapter) agentConnectEvent() {
 			elem.Event = "AGENT_CONNECT"
 			elem.EventCode = AgentConnect
 			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"], a.logger)
-			elem.Recording = a.fetchRecordingFullPath(m["Channel"])
+			if elem.Recording == "" {
+				elem.Recording = a.fetchRecordingFullPath(m["Channel"])
+			}
 			a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 
 			a.logger.Debug("Call state changed", "event", "AGENT_CONNECT",
@@ -372,7 +377,7 @@ func (a *Adapter) fetchRecordingFullPath(channel string) string {
 		a.logger.Error("Could not run Getvar action", "err", err)
 	}
 
-	a.logger.Debug("Recording file name fetched via Action", "action", rec)
+	a.logger.Debug("Recording file name fetched via Action", "channel", channel, "action", rec)
 
 	// if there is no recording file return empty string
 	if rec["Value"] == "" {

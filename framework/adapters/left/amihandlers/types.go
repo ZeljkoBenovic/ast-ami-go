@@ -30,6 +30,8 @@ type InboundCall struct {
 	Timestamp    int64     `json:"timestamp"`
 	EventCode    EventCode `json:"event_code"`
 	Queue        Queue     `json:"queue"`
+
+	ChannelID string `json:"-"`
 }
 
 type OutboundCall struct {
@@ -47,6 +49,8 @@ type OutboundCall struct {
 	Recording    string    `json:"recording"`
 	Timestamp    int64     `json:"timestamp"`
 	EventCode    EventCode `json:"event_code"`
+
+	ChannelID string `json:"-"`
 }
 
 type CallUID string
