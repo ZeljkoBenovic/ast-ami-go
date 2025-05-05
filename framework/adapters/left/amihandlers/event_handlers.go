@@ -105,6 +105,13 @@ func (a *Adapter) newChannelHandler() {
 
 func (a *Adapter) hangupHandler() {
 	if err := a.amigo.RegisterHandler("Hangup", func(m map[string]string) {
+		var callIdentifier string
+		if _, ok := a.amiEvents.Outbound[CallUID(m["Uniqueid"])]; ok {
+			callIdentifier = m["Uniqueid"]
+		} else {
+			callIdentifier = m["Linkedid"]
+		}
+
 		if elem, ok := a.amiEvents.Outbound[CallUID(m["Uniqueid"])]; ok {
 			// change call status
 			elem.Event = "OUTBOUND_CALL_END"
@@ -112,9 +119,9 @@ func (a *Adapter) hangupHandler() {
 			elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"], a.logger)
 			a.amiEvents.Outbound[CallUID(m["Uniqueid"])] = elem
 			// send data
-			a.sendDataToWebhook(m["Uniqueid"], outbound)
+			a.sendDataToWebhook(callIdentifier, outbound)
 			// and delete element
-			delete(a.amiEvents.Outbound, CallUID(m["Uniqueid"]))
+			delete(a.amiEvents.Outbound, CallUID(callIdentifier))
 
 			a.logger.Info("Call removed",
 				"event", "OUTBOUND_CALL_END",
@@ -186,7 +193,7 @@ func (a *Adapter) newStateHandler() {
 					"called_num", m["Exten"],
 					"call_id", m["Uniqueid"])
 
-				a.sendDataToWebhook(m["Uniqueid"], outbound)
+				a.sendDataToWebhook(callIdentifier, outbound)
 
 			case "6":
 				elem.Event = "ANSWERED"
@@ -208,7 +215,7 @@ func (a *Adapter) newStateHandler() {
 					"called_num", m["Exten"],
 					"call_id", m["Uniqueid"])
 
-				a.sendDataToWebhook(m["Uniqueid"], outbound)
+				a.sendDataToWebhook(callIdentifier, outbound)
 			}
 		}
 
