@@ -190,7 +190,9 @@ func (a *Adapter) newStateHandler() {
 				elem.EventCode = Answered
 				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"], a.logger)
 				elem.CallerIDName = m["CallerIDName"]
-				elem.Recording = a.fetchRecordingFullPath(m["Channel"])
+				if elem.Recording == "" {
+					elem.Recording = a.fetchRecordingFullPath(m["Channel"])
+				}
 				a.amiEvents.Outbound[CallUID(m["Uniqueid"])] = elem
 
 				a.logger.Debug("Call state changed", "event", "ANSWERED",
@@ -232,7 +234,9 @@ func (a *Adapter) newStateHandler() {
 				elem.EventCode = Answered
 				elem.Timestamp = convertTimeToUnixTime(m["TimeReceived"], a.logger)
 				elem.CallerIDName = m["CallerIDName"]
-				elem.Recording = a.fetchRecordingFullPath(m["Channel"])
+				if elem.Recording == "" {
+					elem.Recording = a.fetchRecordingFullPath(m["Channel"])
+				}
 				a.amiEvents.Inbound[CallUID(m["Uniqueid"])] = elem
 
 				a.logger.Debug("Call state changed", "event", "ANSWERED",
